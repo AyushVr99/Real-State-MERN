@@ -40,6 +40,12 @@ export const deleteUser = async(req,res,next) => {
     if(req.user.id != req.params.id) return next(errorHandler(401, 'Not Authorized from delete User'));
     try {
         await User.findByIdAndDelete(req.params.id);
+        const allListings = await Listing.find({ userRef: req.params.id});
+        if(allListings){
+          await Promise.all(allListings.map(async(listing)=>{
+            await Listing.findByIdAndDelete(listing._id);
+          }))
+        }
         res.clearCookie('access_token');
         res.status(200).json('User deleted successfully');
     } catch (error) {
